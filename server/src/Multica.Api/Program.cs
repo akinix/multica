@@ -24,6 +24,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddSingleton<CookieService>();
 builder.Services.AddSingleton<GoogleOAuthService>();
 builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddSingleton<SignupControlService>();
 
 // CORS
 builder.Services.AddCors(options =>

@@ -34,6 +34,7 @@ public static class AuthHandler
         GoogleOAuthService googleOAuth,
         JwtTokenService jwtService,
         CookieService cookieService,
+        SignupControlService signupControl,
         MulticaDbContext db,
         ILogger<Program> logger)
     {
@@ -54,7 +55,10 @@ public static class AuthHandler
         if (user is null)
         {
             // Check signup controls
-            // TODO: Implement signup controls (AllowSignup, AllowedEmails, AllowedEmailDomains)
+            if (!signupControl.IsSignupAllowed(userInfo.Email))
+            {
+                return Results.Forbid();
+            }
 
             user = new User
             {
