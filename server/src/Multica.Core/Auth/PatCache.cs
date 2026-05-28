@@ -11,7 +11,7 @@ namespace Multica.Core.Auth;
 public class PatCache
 {
     private const string KeyPrefix = "mul:auth:pat:";
-    private static readonly TimeSpan DefaultTtl = TimeSpan.FromMinutes(10);
+    public static readonly TimeSpan DefaultTtl = TimeSpan.FromMinutes(10);
 
     private readonly IDatabase? _redis;
     private readonly ILogger<PatCache> _logger;
