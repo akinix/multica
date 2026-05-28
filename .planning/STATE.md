@@ -2,9 +2,9 @@
 
 ## Current Phase
 
-**Phase:** Phase 2 Context Gathered
-**Status:** Context gathered, ready for planning
-**Next action:** `/gsd:plan-phase 2`
+**Phase:** Phase 3: Issues & Comments
+**Status:** Phase 2 complete, ready for Phase 3
+**Next action:** `/gsd:plan-phase 3`
 
 ## Project Reference
 
@@ -18,7 +18,7 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Phase 1: Foundation & Data Layer | ✅ Complete | 49 entities, DbContext, 12 configs, Redis, Serilog, health checks, 3 tests pass |
-| Phase 2: Auth & Middleware | Not started | |
+| Phase 2: Auth & Middleware | ✅ Complete | 4 plans, 24 tasks, auth middleware pipeline |
 | Phase 3: Issues & Comments | Not started | |
 | Phase 4: Agents, Skills, Runtimes | Not started | |
 | Phase 5: Workspaces, Projects, Squads | Not started | |
@@ -31,6 +31,7 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 
 ## Recent Activity
 
+- 2026-05-28: Phase 2 completed — Auth & Middleware (4 plans, 24 tasks, full auth pipeline)
 - 2026-05-28: Phase 2 context gathered — Auth & Middleware decisions captured in CONTEXT.md
 - 2026-05-28: Phase 1 completed — Foundation & Data Layer (49 entities, DbContext, infrastructure, tests)
 - 2026-05-28: Codebase mapped via `/gsd:map-codebase` — 7 documents in `.planning/codebase/`
@@ -52,4 +53,4 @@ None — ready to begin execution.
 
 ---
 *Created: 2026-05-28*
-*Last updated: 2026-05-28 after Phase 1 completion*
+*Last updated: 2026-05-28 after Phase 2 completion*
