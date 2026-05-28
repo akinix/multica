@@ -59,7 +59,43 @@ app.UseSerilogRequestLogging(options =>
         diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value ?? "");
         diagnosticContext.Set("UserAgent", httpContext.Request.Headers.UserAgent.ToString() ?? "");
         diagnosticContext.Set("ClientPlatform", httpContext.Request.Headers["X-Client-Platform"].ToString() ?? "");
+        diagnosticContext.Set("ClientVersion", httpContext.Request.Headers["X-Client-Version"].ToString() ?? "");
+        diagnosticContext.Set("ClientOS", httpContext.Request.Headers["X-Client-OS"].ToString() ?? "");
         diagnosticContext.Set("RequestId", httpContext.Items["RequestId"]?.ToString() ?? "");
+        diagnosticContext.Set("UserId", httpContext.Request.Headers["X-User-ID"].ToString() ?? "");
+
+        // Webhook path redaction
+        var path = httpContext.Request.Path.Value ?? "";
+        if (path.StartsWith("/api/webhooks/autopilots/"))
+        {
+            var segments = path.Split('/');
+            if (segments.Length > 4)
+            {
+                segments[4] = "[redacted]";
+                diagnosticContext.Set("RedactedPath", string.Join("/", segments));
+            }
+        }
+
+        // Error enrichment
+        if (httpContext.Response.StatusCode >= 500)
+        {
+            diagnosticContext.Set("Error", true);
+        }
+    };
+
+    options.GetLevel = (httpContext, elapsed, ex) =>
+    {
+        // Slow request detection (elapsed is in seconds)
+        if (elapsed > 5)
+            return Serilog.Events.LogEventLevel.Error;
+        if (elapsed > 1)
+            return Serilog.Events.LogEventLevel.Warning;
+
+        // Health endpoint skip
+        if (httpContext.Request.Path.StartsWithSegments("/health"))
+            return Serilog.Events.LogEventLevel.Verbose;
+
+        return Serilog.Events.LogEventLevel.Information;
     };
 });
 
