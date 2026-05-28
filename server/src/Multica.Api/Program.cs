@@ -5,6 +5,7 @@ using Multica.Api.Middleware;
 using Multica.Core.Auth;
 using Multica.Infrastructure;
 using Multica.Infrastructure.Data;
+using Prometheus;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -89,6 +90,9 @@ app.UseCors();
 // 7. Rate Limiting
 app.UseRateLimit();
 
+// 8. HTTP Metrics (prometheus-net)
+app.UseHttpMetrics();
+
 // Health checks
 app.MapHealthChecks("/healthz", new HealthCheckOptions
 {
@@ -109,6 +113,9 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 
 // Auth endpoints
 app.MapAuthEndpoints();
+
+// Metrics endpoint
+app.MapMetrics();
 
 app.MapGet("/", () => "Multica API");
 
