@@ -1,6 +1,7 @@
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Multica.Api.Handlers;
+using Multica.Api.Middleware;
 using Multica.Core.Auth;
 using Multica.Infrastructure;
 using Multica.Infrastructure.Data;
@@ -42,6 +43,13 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Middleware pipeline (order matters)
+// 1. Request ID
+app.UseMiddleware<RequestIdMiddleware>();
+
+// 2. Client Metadata
+app.UseMiddleware<ClientMetadataMiddleware>();
+
+// 3. Request Logging
 app.UseSerilogRequestLogging(options =>
 {
     options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
@@ -49,9 +57,11 @@ app.UseSerilogRequestLogging(options =>
         diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value ?? "");
         diagnosticContext.Set("UserAgent", httpContext.Request.Headers.UserAgent.ToString() ?? "");
         diagnosticContext.Set("ClientPlatform", httpContext.Request.Headers["X-Client-Platform"].ToString() ?? "");
+        diagnosticContext.Set("RequestId", httpContext.Items["RequestId"]?.ToString() ?? "");
     };
 });
 
+// 4. Exception Handler
 app.UseExceptionHandler(error =>
 {
     error.Run(async context =>
@@ -69,7 +79,14 @@ app.UseExceptionHandler(error =>
     });
 });
 
+// 5. CSP
+app.UseMiddleware<CspMiddleware>();
+
+// 6. CORS
 app.UseCors();
+
+// 7. Rate Limiting
+app.UseRateLimit();
 
 // Health checks
 app.MapHealthChecks("/healthz", new HealthCheckOptions
