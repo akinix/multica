@@ -168,6 +168,12 @@ app.MapAttachmentEndpoints();
 // Issue pull request endpoints
 app.MapIssuePullRequestEndpoints();
 
+// Issue subscriber endpoints
+app.MapSubscriberEndpoints();
+
+// Issue task management endpoints
+app.MapIssueTaskEndpoints();
+
 // Metrics endpoint
 app.MapMetrics();
 

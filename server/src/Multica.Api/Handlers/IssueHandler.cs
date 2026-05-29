@@ -1391,7 +1391,7 @@ public static class IssueHandler
     /// <summary>
     /// Converts an Issue entity to an IssueResponse DTO.
     /// </summary>
-    private static IssueResponse IssueToResponse(Issue issue, string prefix, List<LabelResponse>? labels = null)
+    public static IssueResponse IssueToResponse(Issue issue, string prefix, List<LabelResponse>? labels = null)
     {
         var identifier = $"{prefix}-{issue.Number}";
         return new IssueResponse
