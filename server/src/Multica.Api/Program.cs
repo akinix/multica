@@ -150,6 +150,9 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 // Auth endpoints
 app.MapAuthEndpoints();
 
+// Issue endpoints
+app.MapIssueEndpoints();
+
 // Metrics endpoint
 app.MapMetrics();
 
