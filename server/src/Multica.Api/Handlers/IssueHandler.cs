@@ -22,6 +22,8 @@ public static class IssueHandler
         // Static routes must be registered before parameterized routes to avoid conflicts
         app.MapGet("/api/issues/search", SearchIssues);
         app.MapGet("/api/issues/grouped", ListGroupedIssues);
+        app.MapGet("/api/issues/children", ListChildrenByParents);
+        app.MapGet("/api/issues/child-progress", ChildIssueProgress);
         app.MapGet("/api/issues", ListIssues);
         app.MapPost("/api/issues/batch/update", BatchUpdateIssues);
         app.MapPost("/api/issues/batch/delete", BatchDeleteIssues);
@@ -30,6 +32,7 @@ public static class IssueHandler
 
         group.MapPost("/", CreateIssue);
         group.MapGet("/{id}", GetIssue);
+        group.MapGet("/{id}/children", ListChildIssues);
         group.MapPatch("/{id}", UpdateIssue);
         group.MapDelete("/{id}", DeleteIssue);
     }
@@ -80,6 +83,34 @@ public static class IssueHandler
             .MaxAsync(i => (int?)i.Number) ?? 0;
         var issueNumber = maxNumber + 1;
 
+        // Parse parent issue ID and validate
+        Guid? parentIssueId = null;
+        var projectIdStr = request.ProjectId;
+        if (!string.IsNullOrEmpty(request.ParentIssueId))
+        {
+            if (!Guid.TryParse(request.ParentIssueId, out var parsedParentId))
+            {
+                return Results.BadRequest(new { error = "invalid parent_issue_id" });
+            }
+
+            // Validate parent exists in same workspace
+            var parentIssue = await db.Issues
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == parsedParentId && i.WorkspaceId == workspaceId.Value);
+            if (parentIssue is null)
+            {
+                return Results.BadRequest(new { error = "parent issue not found in this workspace" });
+            }
+
+            parentIssueId = parsedParentId;
+
+            // Inherit project_id from parent when not specified
+            if (string.IsNullOrEmpty(projectIdStr) && parentIssue.ProjectId.HasValue)
+            {
+                projectIdStr = parentIssue.ProjectId.Value.ToString();
+            }
+        }
+
         // Create issue entity
         var issue = new Issue
         {
@@ -93,8 +124,8 @@ public static class IssueHandler
             AssigneeId = !string.IsNullOrEmpty(request.AssigneeId) ? Guid.Parse(request.AssigneeId) : null,
             CreatorType = "member",
             CreatorId = creatorId,
-            ParentIssueId = !string.IsNullOrEmpty(request.ParentIssueId) ? Guid.Parse(request.ParentIssueId) : null,
-            ProjectId = !string.IsNullOrEmpty(request.ProjectId) ? Guid.Parse(request.ProjectId) : null,
+            ParentIssueId = parentIssueId,
+            ProjectId = !string.IsNullOrEmpty(projectIdStr) ? Guid.Parse(projectIdStr) : null,
             Position = 0,
             Number = issueNumber,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -270,7 +301,46 @@ public static class IssueHandler
         }
         if (body.TryGetProperty("parent_issue_id", out var parentIdProp))
         {
-            issue.ParentIssueId = parentIdProp.ValueKind == JsonValueKind.Null ? null : Guid.Parse(parentIdProp.GetString()!);
+            if (parentIdProp.ValueKind == JsonValueKind.Null)
+            {
+                issue.ParentIssueId = null;
+            }
+            else if (parentIdProp.ValueKind == JsonValueKind.String && Guid.TryParse(parentIdProp.GetString(), out var newParentId))
+            {
+                // Cannot set self as parent
+                if (newParentId == issue.Id)
+                {
+                    return Results.BadRequest(new { error = "an issue cannot be its own parent" });
+                }
+
+                // Validate parent exists in same workspace
+                var parentExists = await db.Issues
+                    .AnyAsync(i => i.Id == newParentId && i.WorkspaceId == workspaceId.Value);
+                if (!parentExists)
+                {
+                    return Results.BadRequest(new { error = "parent issue not found in this workspace" });
+                }
+
+                // Cycle detection: walk up from new parent to ensure no circular reference
+                var cursor = newParentId;
+                for (var depth = 0; depth < 10; depth++)
+                {
+                    var ancestor = await db.Issues
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(i => i.Id == cursor);
+                    if (ancestor is null || !ancestor.ParentIssueId.HasValue)
+                    {
+                        break;
+                    }
+                    if (ancestor.ParentIssueId == issue.Id)
+                    {
+                        return Results.BadRequest(new { error = "circular parent relationship detected" });
+                    }
+                    cursor = ancestor.ParentIssueId.Value;
+                }
+
+                issue.ParentIssueId = newParentId;
+            }
         }
         if (body.TryGetProperty("project_id", out var projectIdProp))
         {
@@ -337,6 +407,161 @@ public static class IssueHandler
         logger.LogInformation("Issue deleted: {IssueId}", issue.Id);
 
         return Results.NoContent();
+    }
+
+    // --- Child Issue Endpoints ---
+
+    /// <summary>
+    /// Lists child issues of a parent issue.
+    /// GET /api/issues/{id}/children
+    /// </summary>
+    private static async Task<IResult> ListChildIssues(
+        string id,
+        HttpContext httpContext,
+        MulticaDbContext db)
+    {
+        var workspaceId = httpContext.Items["WorkspaceId"] as Guid?;
+        if (workspaceId is null)
+        {
+            return Results.BadRequest(new { error = "workspace_id is required" });
+        }
+
+        // Load parent issue
+        Issue? parentIssue;
+        if (Guid.TryParse(id, out var uuid))
+        {
+            parentIssue = await db.Issues
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == uuid && i.WorkspaceId == workspaceId.Value);
+        }
+        else
+        {
+            var parts = id.Split('-', 2);
+            if (parts.Length != 2 || !int.TryParse(parts[1], out var number))
+            {
+                return Results.BadRequest(new { error = "invalid issue id or identifier" });
+            }
+            parentIssue = await db.Issues
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i =>
+                    i.WorkspaceId == workspaceId.Value &&
+                    i.Number == number);
+        }
+
+        if (parentIssue is null)
+        {
+            return Results.NotFound(new { error = "issue not found" });
+        }
+
+        // Query children
+        var children = await db.Issues
+            .AsNoTracking()
+            .Where(i => i.ParentIssueId == parentIssue.Id && i.WorkspaceId == workspaceId.Value)
+            .OrderBy(i => i.Position)
+            .ToListAsync();
+
+        // Get workspace for prefix
+        var workspace = await db.Workspaces.FindAsync(workspaceId.Value);
+        var prefix = workspace?.IssuePrefix ?? GenerateIssuePrefix(workspace?.Name ?? "");
+
+        var response = children.Select(i => IssueToResponse(i, prefix)).ToList();
+
+        return Results.Ok(new { issues = response });
+    }
+
+    private const int ListChildrenByParentsLimit = 200;
+
+    /// <summary>
+    /// Returns the union of children for the provided parent IDs.
+    /// GET /api/issues/children?parent_ids={uuid1},{uuid2}
+    /// </summary>
+    private static async Task<IResult> ListChildrenByParents(
+        HttpContext httpContext,
+        MulticaDbContext db)
+    {
+        var workspaceId = httpContext.Items["WorkspaceId"] as Guid?;
+        if (workspaceId is null)
+        {
+            return Results.BadRequest(new { error = "workspace_id is required" });
+        }
+
+        var raw = httpContext.Request.Query["parent_ids"].ToString();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return Results.Ok(new { issues = Array.Empty<object>() });
+        }
+
+        var parts = raw.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length > ListChildrenByParentsLimit)
+        {
+            return Results.BadRequest(new { error = "too many parent_ids" });
+        }
+
+        var parentIds = new List<Guid>();
+        foreach (var part in parts)
+        {
+            var trimmed = part.Trim();
+            if (string.IsNullOrEmpty(trimmed))
+                continue;
+
+            if (!Guid.TryParse(trimmed, out var parentId))
+            {
+                return Results.BadRequest(new { error = $"invalid parent_ids: {trimmed}" });
+            }
+            parentIds.Add(parentId);
+        }
+
+        if (parentIds.Count == 0)
+        {
+            return Results.Ok(new { issues = Array.Empty<object>() });
+        }
+
+        // Query children for all parent IDs, scoped to workspace
+        var children = await db.Issues
+            .AsNoTracking()
+            .Where(i => i.ParentIssueId.HasValue
+                && parentIds.Contains(i.ParentIssueId.Value)
+                && i.WorkspaceId == workspaceId.Value)
+            .OrderBy(i => i.Position)
+            .ToListAsync();
+
+        // Get workspace for prefix
+        var workspace = await db.Workspaces.FindAsync(workspaceId.Value);
+        var prefix = workspace?.IssuePrefix ?? GenerateIssuePrefix(workspace?.Name ?? "");
+
+        var response = children.Select(i => IssueToResponse(i, prefix)).ToList();
+
+        return Results.Ok(new { issues = response });
+    }
+
+    /// <summary>
+    /// Returns child issue progress (total/done per parent).
+    /// GET /api/issues/child-progress
+    /// </summary>
+    private static async Task<IResult> ChildIssueProgress(
+        HttpContext httpContext,
+        MulticaDbContext db)
+    {
+        var workspaceId = httpContext.Items["WorkspaceId"] as Guid?;
+        if (workspaceId is null)
+        {
+            return Results.BadRequest(new { error = "workspace_id is required" });
+        }
+
+        // Group by parent_issue_id, count total and done
+        var progress = await db.Issues
+            .AsNoTracking()
+            .Where(i => i.ParentIssueId.HasValue && i.WorkspaceId == workspaceId.Value)
+            .GroupBy(i => i.ParentIssueId!)
+            .Select(g => new
+            {
+                ParentIssueId = g.Key.ToString(),
+                Total = g.Count(),
+                Done = g.Count(i => i.Status == "done")
+            })
+            .ToListAsync();
+
+        return Results.Ok(new { progress });
     }
 
     // --- Batch Endpoints ---
