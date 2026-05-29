@@ -359,7 +359,7 @@ public static class IssueHandler
             CreatedAt = issue.CreatedAt.ToString("o"),
             UpdatedAt = issue.UpdatedAt.ToString("o"),
             Metadata = issue.Metadata != null
-                ? JsonSerializer.Deserialize<Dictionary<string, object>>(issue.Metadata.RootElement.GetRawText())
+                ? JsonSerializer.Deserialize<Dictionary<string, object>>(issue.Metadata.RootElement.GetRawText()) ?? new Dictionary<string, object>()
                 : new Dictionary<string, object>()
         };
     }
