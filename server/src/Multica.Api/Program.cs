@@ -162,6 +162,12 @@ app.MapIssueMetadataEndpoints();
 // Comment endpoints
 app.MapCommentEndpoints();
 
+// Attachment endpoints
+app.MapAttachmentEndpoints();
+
+// Issue pull request endpoints
+app.MapIssuePullRequestEndpoints();
+
 // Metrics endpoint
 app.MapMetrics();
 

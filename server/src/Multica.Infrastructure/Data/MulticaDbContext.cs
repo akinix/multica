@@ -24,6 +24,9 @@ public class MulticaDbContext : DbContext
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<IssueLabel> IssueLabels => Set<IssueLabel>();
     public DbSet<IssueToLabel> IssueToLabels => Set<IssueToLabel>();
+    public DbSet<Attachment> Attachments => Set<Attachment>();
+    public DbSet<IssuePullRequest> IssuePullRequests => Set<IssuePullRequest>();
+    public DbSet<GithubPullRequest> GithubPullRequests => Set<GithubPullRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

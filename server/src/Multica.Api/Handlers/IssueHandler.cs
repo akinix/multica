@@ -207,6 +207,11 @@ public static class IssueHandler
         var labels = await IssueLabelHandler.LoadLabelsForIssue(db, issue.Id, workspaceId.Value);
 
         var response = IssueToResponse(issue, issuePrefix, labels);
+
+        // Load attachments for this issue
+        var attachments = await AttachmentHandler.LoadAttachmentsForIssue(db, issue.Id, workspaceId.Value);
+        response = response with { Attachments = attachments };
+
         return Results.Ok(response);
     }
 
@@ -1515,6 +1520,9 @@ public static class IssueHandler
 
         [System.Text.Json.Serialization.JsonPropertyName("labels")]
         public List<LabelResponse>? Labels { get; init; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("attachments")]
+        public List<AttachmentHandler.AttachmentResponse>? Attachments { get; init; }
     }
 
     public record SearchIssueResponse

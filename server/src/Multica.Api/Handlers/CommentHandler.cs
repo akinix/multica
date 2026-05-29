@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Multica.Core.Entities;
 using Multica.Infrastructure.Data;
+using static Multica.Api.Handlers.AttachmentHandler;
 
 namespace Multica.Api.Handlers;
 
@@ -98,6 +99,19 @@ public static class CommentHandler
                 Attachments = new List<AttachmentResponse>()
             })
             .ToListAsync();
+
+        // Bulk-load attachments for all comments at once
+        var commentIds = comments.Select(c => Guid.Parse(c.Id)).ToList();
+        var attachmentsMap = await AttachmentHandler.LoadAttachmentsForComments(db, commentIds, workspaceId.Value);
+
+        // Attach attachments to each comment
+        foreach (var comment in comments)
+        {
+            if (attachmentsMap.TryGetValue(comment.Id, out var attachments))
+            {
+                comment.Attachments = attachments;
+            }
+        }
 
         return Results.Ok(comments);
     }
@@ -407,7 +421,7 @@ public static class CommentHandler
         public List<ReactionResponse> Reactions { get; init; } = new();
 
         [JsonPropertyName("attachments")]
-        public List<AttachmentResponse> Attachments { get; init; } = new();
+        public List<AttachmentResponse> Attachments { get; set; } = new();
     }
 
     public record ReactionResponse
@@ -420,23 +434,5 @@ public static class CommentHandler
 
         [JsonPropertyName("users")]
         public List<string> Users { get; init; } = new();
-    }
-
-    public record AttachmentResponse
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; init; } = "";
-
-        [JsonPropertyName("url")]
-        public string Url { get; init; } = "";
-
-        [JsonPropertyName("name")]
-        public string Name { get; init; } = "";
-
-        [JsonPropertyName("content_type")]
-        public string ContentType { get; init; } = "";
-
-        [JsonPropertyName("size")]
-        public long Size { get; init; }
     }
 }
