@@ -23,6 +23,8 @@ public static class IssueHandler
         app.MapGet("/api/issues/search", SearchIssues);
         app.MapGet("/api/issues/grouped", ListGroupedIssues);
         app.MapGet("/api/issues", ListIssues);
+        app.MapPost("/api/issues/batch/update", BatchUpdateIssues);
+        app.MapPost("/api/issues/batch/delete", BatchDeleteIssues);
 
         var group = app.MapGroup("/api/issues");
 
@@ -335,6 +337,274 @@ public static class IssueHandler
         logger.LogInformation("Issue deleted: {IssueId}", issue.Id);
 
         return Results.NoContent();
+    }
+
+    // --- Batch Endpoints ---
+
+    private const int MaxBatchSize = 100;
+
+    /// <summary>
+    /// Batch updates multiple issues with the same changes.
+    /// POST /api/issues/batch/update
+    /// Uses raw JSON parsing to detect explicitly set fields (including null),
+    /// matching Go's behavior for distinguishing "not present" vs "explicitly null".
+    /// </summary>
+    private static async Task<IResult> BatchUpdateIssues(
+        [FromBody] JsonElement body,
+        HttpContext httpContext,
+        MulticaDbContext db,
+        ILogger<Program> logger)
+    {
+        // Parse issue_ids
+        if (!body.TryGetProperty("issue_ids", out var issueIdsProp) || issueIdsProp.ValueKind != JsonValueKind.Array)
+        {
+            return Results.BadRequest(new { error = "issue_ids is required" });
+        }
+
+        var issueIds = new List<string>();
+        foreach (var item in issueIdsProp.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.String)
+            {
+                issueIds.Add(item.GetString()!);
+            }
+        }
+
+        if (issueIds.Count == 0)
+        {
+            return Results.BadRequest(new { error = "issue_ids is required" });
+        }
+
+        if (issueIds.Count > MaxBatchSize)
+        {
+            return Results.BadRequest(new { error = $"issue_ids exceeds maximum batch size of {MaxBatchSize}" });
+        }
+
+        var workspaceId = httpContext.Items["WorkspaceId"] as Guid?;
+        if (workspaceId is null)
+        {
+            return Results.BadRequest(new { error = "workspace_id is required" });
+        }
+
+        // Parse updates object - detect which fields are explicitly set (including null)
+        JsonElement updatesProp = default;
+        var hasUpdates = body.TryGetProperty("updates", out updatesProp) && updatesProp.ValueKind == JsonValueKind.Object;
+
+        if (!hasUpdates)
+        {
+            return Results.Ok(new { updated = 0 });
+        }
+
+        // Check if any mutation field is present in updates
+        var hasMutation = false;
+        foreach (var prop in updatesProp.EnumerateObject())
+        {
+            hasMutation = true;
+            break;
+        }
+
+        if (!hasMutation)
+        {
+            return Results.Ok(new { updated = 0 });
+        }
+
+        var updated = 0;
+        foreach (var issueIdStr in issueIds)
+        {
+            if (!Guid.TryParse(issueIdStr, out var issueId))
+            {
+                continue;
+            }
+
+            var issue = await db.Issues
+                .FirstOrDefaultAsync(i => i.Id == issueId && i.WorkspaceId == workspaceId.Value);
+            if (issue is null)
+            {
+                continue;
+            }
+
+            // Apply only explicitly present fields (matching Go's raw JSON detection)
+            if (updatesProp.TryGetProperty("title", out var titleProp) && titleProp.ValueKind == JsonValueKind.String)
+            {
+                issue.Title = titleProp.GetString()!;
+            }
+            if (updatesProp.TryGetProperty("description", out var descProp))
+            {
+                issue.Description = descProp.ValueKind == JsonValueKind.Null ? null : descProp.GetString();
+            }
+            if (updatesProp.TryGetProperty("status", out var statusProp) && statusProp.ValueKind == JsonValueKind.String)
+            {
+                issue.Status = statusProp.GetString()!;
+            }
+            if (updatesProp.TryGetProperty("priority", out var priorityProp) && priorityProp.ValueKind == JsonValueKind.String)
+            {
+                issue.Priority = priorityProp.GetString()!;
+            }
+            if (updatesProp.TryGetProperty("position", out var positionProp) && positionProp.ValueKind == JsonValueKind.Number)
+            {
+                issue.Position = positionProp.GetDouble();
+            }
+            if (updatesProp.TryGetProperty("assignee_type", out var assigneeTypeProp))
+            {
+                issue.AssigneeType = assigneeTypeProp.ValueKind == JsonValueKind.Null ? null : assigneeTypeProp.GetString();
+            }
+            if (updatesProp.TryGetProperty("assignee_id", out var assigneeIdProp))
+            {
+                if (assigneeIdProp.ValueKind == JsonValueKind.Null)
+                {
+                    issue.AssigneeId = null;
+                }
+                else if (assigneeIdProp.ValueKind == JsonValueKind.String && Guid.TryParse(assigneeIdProp.GetString(), out var assigneeId))
+                {
+                    issue.AssigneeId = assigneeId;
+                }
+                else
+                {
+                    continue; // Invalid UUID, skip this issue
+                }
+            }
+            if (updatesProp.TryGetProperty("start_date", out var startDateProp))
+            {
+                if (startDateProp.ValueKind == JsonValueKind.Null)
+                {
+                    issue.StartDate = null;
+                }
+                else if (startDateProp.ValueKind == JsonValueKind.String)
+                {
+                    var startDateStr = startDateProp.GetString();
+                    if (string.IsNullOrEmpty(startDateStr))
+                    {
+                        issue.StartDate = null;
+                    }
+                    else if (DateTimeOffset.TryParse(startDateStr, out var startDate))
+                    {
+                        issue.StartDate = startDate;
+                    }
+                    else
+                    {
+                        continue; // Invalid date, skip
+                    }
+                }
+            }
+            if (updatesProp.TryGetProperty("due_date", out var dueDateProp))
+            {
+                if (dueDateProp.ValueKind == JsonValueKind.Null)
+                {
+                    issue.DueDate = null;
+                }
+                else if (dueDateProp.ValueKind == JsonValueKind.String)
+                {
+                    var dueDateStr = dueDateProp.GetString();
+                    if (string.IsNullOrEmpty(dueDateStr))
+                    {
+                        issue.DueDate = null;
+                    }
+                    else if (DateTimeOffset.TryParse(dueDateStr, out var dueDate))
+                    {
+                        issue.DueDate = dueDate;
+                    }
+                    else
+                    {
+                        continue; // Invalid date, skip
+                    }
+                }
+            }
+            if (updatesProp.TryGetProperty("parent_issue_id", out var parentIdProp))
+            {
+                if (parentIdProp.ValueKind == JsonValueKind.Null)
+                {
+                    issue.ParentIssueId = null;
+                }
+                else if (parentIdProp.ValueKind == JsonValueKind.String && Guid.TryParse(parentIdProp.GetString(), out var parentId))
+                {
+                    issue.ParentIssueId = parentId;
+                }
+                else
+                {
+                    continue; // Invalid UUID, skip
+                }
+            }
+            if (updatesProp.TryGetProperty("project_id", out var projectIdProp))
+            {
+                if (projectIdProp.ValueKind == JsonValueKind.Null)
+                {
+                    issue.ProjectId = null;
+                }
+                else if (projectIdProp.ValueKind == JsonValueKind.String && Guid.TryParse(projectIdProp.GetString(), out var projId))
+                {
+                    issue.ProjectId = projId;
+                }
+                else
+                {
+                    continue; // Invalid UUID, skip
+                }
+            }
+
+            issue.UpdatedAt = DateTimeOffset.UtcNow;
+            updated++;
+        }
+
+        if (updated > 0)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        logger.LogInformation("Batch update issues: {Count} updated", updated);
+        return Results.Ok(new { updated });
+    }
+
+    /// <summary>
+    /// Batch deletes multiple issues. Silently skips non-existent IDs.
+    /// POST /api/issues/batch/delete
+    /// </summary>
+    private static async Task<IResult> BatchDeleteIssues(
+        [FromBody] BatchDeleteIssuesRequest request,
+        HttpContext httpContext,
+        MulticaDbContext db,
+        ILogger<Program> logger)
+    {
+        if (request.IssueIds is null || request.IssueIds.Count == 0)
+        {
+            return Results.BadRequest(new { error = "issue_ids is required" });
+        }
+
+        if (request.IssueIds.Count > MaxBatchSize)
+        {
+            return Results.BadRequest(new { error = $"issue_ids exceeds maximum batch size of {MaxBatchSize}" });
+        }
+
+        var workspaceId = httpContext.Items["WorkspaceId"] as Guid?;
+        if (workspaceId is null)
+        {
+            return Results.BadRequest(new { error = "workspace_id is required" });
+        }
+
+        var deleted = 0;
+        foreach (var issueIdStr in request.IssueIds)
+        {
+            if (!Guid.TryParse(issueIdStr, out var issueId))
+            {
+                continue;
+            }
+
+            var issue = await db.Issues
+                .FirstOrDefaultAsync(i => i.Id == issueId && i.WorkspaceId == workspaceId.Value);
+            if (issue is null)
+            {
+                continue;
+            }
+
+            db.Issues.Remove(issue);
+            deleted++;
+        }
+
+        if (deleted > 0)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        logger.LogInformation("Batch delete issues: {Count} deleted", deleted);
+        return Results.Ok(new { deleted });
     }
 
     // --- Search & List Endpoints ---
@@ -1047,5 +1317,11 @@ public static class IssueHandler
     {
         [System.Text.Json.Serialization.JsonPropertyName("groups")]
         public List<IssueAssigneeGroupResponse> Groups { get; init; } = new();
+    }
+
+    public record BatchDeleteIssuesRequest
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("issue_ids")]
+        public List<string> IssueIds { get; init; } = new();
     }
 }

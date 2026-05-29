@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Multica.Api/Multica.Api.csproj" />
+    <Project Path="src/Multica.Core/Multica.Core.csproj" />
+    <Project Path="src/Multica.Infrastructure/Multica.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Multica.Infrastructure.Tests/Multica.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
