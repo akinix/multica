@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Multica.Core.Entities;
 using Multica.Infrastructure.Data;
 using static Multica.Api.Handlers.AttachmentHandler;
+using static Multica.Api.Handlers.ReactionHandler;
 
 namespace Multica.Api.Handlers;
 
@@ -104,12 +105,19 @@ public static class CommentHandler
         var commentIds = comments.Select(c => Guid.Parse(c.Id)).ToList();
         var attachmentsMap = await AttachmentHandler.LoadAttachmentsForComments(db, commentIds, workspaceId.Value);
 
-        // Attach attachments to each comment
+        // Bulk-load reactions for all comments at once
+        var reactionsMap = await LoadReactionsForComments(db, commentIds);
+
+        // Attach attachments and reactions to each comment
         foreach (var comment in comments)
         {
             if (attachmentsMap.TryGetValue(comment.Id, out var attachments))
             {
                 comment.Attachments = attachments;
+            }
+            if (reactionsMap.TryGetValue(comment.Id, out var reactions))
+            {
+                comment.Reactions = reactions;
             }
         }
 
@@ -418,21 +426,9 @@ public static class CommentHandler
         public string? ResolvedById { get; init; }
 
         [JsonPropertyName("reactions")]
-        public List<ReactionResponse> Reactions { get; init; } = new();
+        public List<ReactionResponse> Reactions { get; set; } = new();
 
         [JsonPropertyName("attachments")]
         public List<AttachmentResponse> Attachments { get; set; } = new();
-    }
-
-    public record ReactionResponse
-    {
-        [JsonPropertyName("emoji")]
-        public string Emoji { get; init; } = "";
-
-        [JsonPropertyName("count")]
-        public int Count { get; init; }
-
-        [JsonPropertyName("users")]
-        public List<string> Users { get; init; } = new();
     }
 }

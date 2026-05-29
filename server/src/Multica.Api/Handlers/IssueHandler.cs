@@ -212,6 +212,10 @@ public static class IssueHandler
         var attachments = await AttachmentHandler.LoadAttachmentsForIssue(db, issue.Id, workspaceId.Value);
         response = response with { Attachments = attachments };
 
+        // Load reactions for this issue
+        var reactions = await IssueReactionHandler.LoadReactionsForIssue(db, issue.Id);
+        response = response with { Reactions = reactions };
+
         return Results.Ok(response);
     }
 
@@ -1523,6 +1527,9 @@ public static class IssueHandler
 
         [System.Text.Json.Serialization.JsonPropertyName("attachments")]
         public List<AttachmentHandler.AttachmentResponse>? Attachments { get; init; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("reactions")]
+        public List<IssueReactionHandler.IssueReactionResponse>? Reactions { get; init; }
     }
 
     public record SearchIssueResponse

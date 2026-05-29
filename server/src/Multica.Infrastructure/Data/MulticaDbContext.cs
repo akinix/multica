@@ -28,6 +28,8 @@ public class MulticaDbContext : DbContext
     public DbSet<IssuePullRequest> IssuePullRequests => Set<IssuePullRequest>();
     public DbSet<GithubPullRequest> GithubPullRequests => Set<GithubPullRequest>();
     public DbSet<IssueSubscriber> IssueSubscribers => Set<IssueSubscriber>();
+    public DbSet<IssueReaction> IssueReactions => Set<IssueReaction>();
+    public DbSet<CommentReaction> CommentReactions => Set<CommentReaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

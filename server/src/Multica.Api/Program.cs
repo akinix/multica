@@ -165,6 +165,12 @@ app.MapCommentEndpoints();
 // Attachment endpoints
 app.MapAttachmentEndpoints();
 
+// Issue reaction endpoints
+app.MapIssueReactionEndpoints();
+
+// Comment reaction endpoints
+app.MapReactionEndpoints();
+
 // Issue pull request endpoints
 app.MapIssuePullRequestEndpoints();
 
