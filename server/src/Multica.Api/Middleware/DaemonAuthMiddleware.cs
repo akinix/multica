@@ -86,7 +86,7 @@ public class DaemonAuthMiddleware
             };
 
             // Cache with TTL clamped to token's remaining lifetime
-            var expiresAt = dt.ExpiresAt != default ? dt.ExpiresAt.DateTime : (DateTime?)null;
+            var expiresAt = dt.ExpiresAt?.DateTime;
             var ttl = PatCache.TTLForExpiry(DateTime.UtcNow, expiresAt);
             await daemonTokenCache.SetAsync(hash, identity, ttl);
 
