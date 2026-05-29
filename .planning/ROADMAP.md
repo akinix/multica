@@ -100,14 +100,25 @@
 15. Implement comment reactions
 16. Implement comment timeline view
 
-**Requirements covered:** ISSUE-01..12, CMT-01..04
+**Plans:** 10 plans in 4 waves
+
+Plans:
+- [ ] 03-01-PLAN.md — Issue CRUD endpoints
+- [ ] 03-02-PLAN.md — Comment CRUD endpoints
+- [ ] 03-03-PLAN.md — Issue search, filters & grouped listing
+- [ ] 03-04-PLAN.md — Batch issue operations
+- [ ] 03-05-PLAN.md — Parent-child relationships & progress tracking
+- [ ] 03-06-PLAN.md — Issue labels & metadata
+- [ ] 03-07-PLAN.md — Issue & comment reactions
+- [ ] 03-08-PLAN.md — Issue attachments & PR tracking
+- [ ] 03-09-PLAN.md — Issue task management & subscriptions
+- [ ] 03-10-PLAN.md — Comment resolve/unresolve & timeline
 
 **Verification:**
 - Full issue lifecycle works (create → update → search → delete)
 - Comment CRUD with reactions works
 - Parent-child progress tracking matches Go behavior
 - Batch operations work correctly
-
 ---
 
 ## Phase 4: Agents, Skills & Runtimes
