@@ -74,10 +74,11 @@
 
 ---
 
-## Phase 3: Issues & Comments
+## Phase 3: Issues & Comments ✅
 
 **Goal:** Issue and comment domain fully functional — the core of the product.
 
+**Status:** Complete (2026-05-29)
 **Estimated effort:** Very Large
 **Risk:** High — issue.go is 3,098 lines, comment.go is 1,269 lines
 
@@ -103,16 +104,16 @@
 **Plans:** 10 plans in 4 waves
 
 Plans:
-- [ ] 03-01-PLAN.md — Issue CRUD endpoints
-- [ ] 03-02-PLAN.md — Comment CRUD endpoints
-- [ ] 03-03-PLAN.md — Issue search, filters & grouped listing
-- [ ] 03-04-PLAN.md — Batch issue operations
-- [ ] 03-05-PLAN.md — Parent-child relationships & progress tracking
-- [ ] 03-06-PLAN.md — Issue labels & metadata
-- [ ] 03-07-PLAN.md — Issue & comment reactions
-- [ ] 03-08-PLAN.md — Issue attachments & PR tracking
-- [ ] 03-09-PLAN.md — Issue task management & subscriptions
-- [ ] 03-10-PLAN.md — Comment resolve/unresolve & timeline
+- [x] 03-01-PLAN.md — Issue CRUD endpoints
+- [x] 03-02-PLAN.md — Comment CRUD endpoints
+- [x] 03-03-PLAN.md — Issue search, filters & grouped listing
+- [x] 03-04-PLAN.md — Batch issue operations
+- [x] 03-05-PLAN.md — Parent-child relationships & progress tracking
+- [x] 03-06-PLAN.md — Issue labels & metadata
+- [x] 03-07-PLAN.md — Issue & comment reactions
+- [x] 03-08-PLAN.md — Issue attachments & PR tracking
+- [x] 03-09-PLAN.md — Issue task management & subscriptions
+- [x] 03-10-PLAN.md — Comment resolve/unresolve & timeline
 
 **Verification:**
 - Full issue lifecycle works (create → update → search → delete)

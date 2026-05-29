@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-29T10:15:00.000Z"
+last_updated: "2026-05-29T12:00:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 14
-  completed_plans: 5
-  percent: 10
+  completed_plans: 6
+  percent: 15
 ---
 
 # Project State
@@ -33,7 +33,7 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 |-------|--------|-------|
 | Phase 1: Foundation & Data Layer | ✅ Complete | 49 entities, DbContext, 12 configs, Redis, Serilog, health checks, 3 tests pass |
 | Phase 2: Auth & Middleware | ✅ Complete | 4 plans, 24 tasks, auth middleware pipeline |
-| Phase 3: Issues & Comments | Planned | 10 plans, 4 waves |
+| Phase 3: Issues & Comments | ✅ Complete | 10 plans, 4 waves |
 | Phase 4: Agents, Skills, Runtimes | Not started | |
 | Phase 5: Workspaces, Projects, Squads | Not started | |
 | Phase 6: Realtime | Not started | |
@@ -45,6 +45,8 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 
 ## Recent Activity
 
+- 2026-05-29: Phase 3 completed — Issues & Comments (10 plans, all comment/issue endpoints)
+- 2026-05-29: Plan 03-10 completed — Comment resolve/unresolve and timeline endpoints (2 tasks, 1 file)
 - 2026-05-29: Plan 03-08 completed — Attachment listing and PR tracking endpoints (2 tasks, 9 files)
 - 2026-05-28: Phase 2 completed — Auth & Middleware (4 plans, 24 tasks, full auth pipeline)
 - 2026-05-28: Phase 2 context gathered — Auth & Middleware decisions captured in CONTEXT.md
@@ -67,7 +69,8 @@ None — ready to begin execution.
 | 2026-05-28 | Full replacement strategy | Open source, no production users to protect |
 | 2026-05-29 | Join query for PR listing | Return full PR details alongside link metadata |
 | 2026-05-29 | Bulk-load attachments for comments | Avoid N+1 queries in ListComments |
+| 2026-05-29 | Actor resolution via X-Actor-Source | Match Go's resolveActor pattern for member vs agent |
 
 ---
 *Created: 2026-05-28*
-*Last updated: 2026-05-29 after Plan 03-08 completion*
+*Last updated: 2026-05-29 after Phase 3 completion*
