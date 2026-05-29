@@ -153,6 +153,9 @@ app.MapAuthEndpoints();
 // Issue endpoints
 app.MapIssueEndpoints();
 
+// Issue label endpoints
+app.MapIssueLabelEndpoints();
+
 // Comment endpoints
 app.MapCommentEndpoints();
 
