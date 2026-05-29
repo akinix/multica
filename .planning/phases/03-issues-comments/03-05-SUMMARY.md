@@ -97,3 +97,9 @@ None - no external service configuration required.
 ---
 *Phase: 03-issues-comments*
 *Completed: 2026-05-29*
+
+## Self-Check: PASSED
+
+- [x] SUMMARY.md exists at `.planning/phases/03-issues-comments/03-05-SUMMARY.md`
+- [x] Task commit `3797a270` verified in git log
+- [x] SUMMARY commit `c18275b1` verified in git log
