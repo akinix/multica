@@ -129,24 +129,16 @@ Plans:
 **Estimated effort:** Large
 **Risk:** Medium — agent.go (1,264 lines), skill.go (1,847 lines)
 
-### Tasks
+**Plans:** 6 plans in 4 waves
 
-1. Implement Agent CRUD endpoints
-2. Implement agent archive/restore
-3. Implement agent skills management
-4. Implement agent environment variables
-5. Implement agent task listing
-6. Implement agent template catalog
-7. Implement Skill CRUD endpoints
-8. Implement skill file management
-9. Implement skill import
-10. Implement Runtime CRUD endpoints
-11. Implement runtime usage tracking
-12. Implement runtime update request/response flow
-13. Implement runtime model listing
-14. Implement runtime local skills
-15. Implement runtime liveness tracking
-16. Implement runtime archive and delete
+Plans:
+
+- [ ] 04-01-PLAN.md — Foundation: entities, DTOs, Redis stores
+- [ ] 04-02-PLAN.md — Agent CRUD, archive/restore, tasks, templates
+- [ ] 04-03-PLAN.md — Skill CRUD, file management, import
+- [ ] 04-04-PLAN.md — Agent template catalog and create-from-template
+- [ ] 04-05-PLAN.md — Runtime CRUD, usage, update flow, delete
+- [ ] 04-06-PLAN.md — Runtime liveness, models, local skills
 
 **Requirements covered:** AGT-01..06, SKL-01..03, RT-01..07 (runtimes)
 
