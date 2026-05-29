@@ -42,6 +42,10 @@ server/migrate
 server/daemon
 server/multica
 
+# C# build artifacts
+server/**/obj/
+server/**/bin/
+
 # Test artifacts
 test-results/
 apps/web/test-results/
