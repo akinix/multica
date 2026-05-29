@@ -156,6 +156,9 @@ app.MapIssueEndpoints();
 // Issue label endpoints
 app.MapIssueLabelEndpoints();
 
+// Issue metadata endpoints
+app.MapIssueMetadataEndpoints();
+
 // Comment endpoints
 app.MapCommentEndpoints();
 
