@@ -1,0 +1,39 @@
+{
+  "project": {
+    "name": "multica-go-to-csharp-migration",
+    "description": "Replace Go backend with C# (ASP.NET Core Minimal API + EF Core)",
+    "created": "2026-05-28"
+  },
+  "preferences": {
+    "commit_style": "conventional",
+    "auto_commit": true,
+    "verification": "make check",
+    "language": "zh-CN"
+  },
+  "tech": {
+    "framework": "ASP.NET Core Minimal API",
+    "orm": "EF Core",
+    "database": "PostgreSQL 17 (pgvector)",
+    "cache": "StackExchange.Redis",
+    "realtime": "ASP.NET Core WebSockets",
+    "cli": "System.CommandLine",
+    "logging": "Serilog",
+    "metrics": "prometheus-net"
+  },
+  "scope": {
+    "migration_type": "full_replacement",
+    "components": [
+      "server",
+      "cli",
+      "daemon"
+    ],
+    "api_compatibility": true,
+    "frontend_changes": false
+  },
+  "intel": {
+    "enabled": false
+  },
+  "workflow": {
+    "_auto_chain_active": false
+  }
+}

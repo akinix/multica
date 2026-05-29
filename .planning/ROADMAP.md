@@ -133,12 +133,23 @@ Plans:
 
 Plans:
 
-- [ ] 04-01-PLAN.md — Foundation: entities, DTOs, Redis stores
-- [ ] 04-02-PLAN.md — Agent CRUD, archive/restore, tasks, templates
-- [ ] 04-03-PLAN.md — Skill CRUD, file management, import
-- [ ] 04-04-PLAN.md — Agent template catalog and create-from-template
-- [ ] 04-05-PLAN.md — Runtime CRUD, usage, update flow, delete
-- [ ] 04-06-PLAN.md — Runtime liveness, models, local skills
+**Wave 1** *(foundation — all downstream plans depend on this)*:
+
+- [ ] 04-01-PLAN.md — Foundation: entities, DTOs, Redis stores (3 tasks, 13 files)
+
+**Wave 2** *(parallel — Agent and Skill endpoints, depends on Wave 1)*:
+
+- [ ] 04-02-PLAN.md — Agent CRUD, archive/restore, tasks, templates (2 tasks) — AGT-01, AGT-02, AGT-05, AGT-06
+- [ ] 04-03-PLAN.md — Skill CRUD, file management, import (2 tasks) — SKL-01, SKL-02, SKL-03
+
+**Wave 3** *(parallel — Agent templates and Runtime endpoints, depends on Wave 2)*:
+
+- [ ] 04-04-PLAN.md — Agent template catalog and create-from-template (2 tasks) — AGT-06
+- [ ] 04-05-PLAN.md — Runtime CRUD, usage, update flow, delete (2 tasks) — RT-01, RT-02, RT-03, RT-07
+
+**Wave 4** *(Runtime advanced features, depends on Wave 3)*:
+
+- [ ] 04-06-PLAN.md — Runtime liveness, models, local skills (2 tasks) — RT-04, RT-05, RT-06
 
 **Requirements covered:** AGT-01..06, SKL-01..03, RT-01..07 (runtimes)
 
