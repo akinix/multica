@@ -22,6 +22,8 @@ public class MulticaDbContext : DbContext
     public DbSet<DaemonToken> DaemonTokens => Set<DaemonToken>();
     public DbSet<PersonalAccessToken> PersonalAccessTokens => Set<PersonalAccessToken>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<IssueLabel> IssueLabels => Set<IssueLabel>();
+    public DbSet<IssueToLabel> IssueToLabels => Set<IssueToLabel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

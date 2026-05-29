@@ -203,7 +203,10 @@ public static class IssueHandler
         var workspace = await db.Workspaces.FindAsync(workspaceId.Value);
         var issuePrefix = workspace?.IssuePrefix ?? GenerateIssuePrefix(workspace?.Name ?? "");
 
-        var response = IssueToResponse(issue, issuePrefix);
+        // Load labels for this issue
+        var labels = await IssueLabelHandler.LoadLabelsForIssue(db, issue.Id, workspaceId.Value);
+
+        var response = IssueToResponse(issue, issuePrefix, labels);
         return Results.Ok(response);
     }
 
@@ -1219,7 +1222,15 @@ public static class IssueHandler
         var workspace = await db.Workspaces.FindAsync(workspaceId.Value);
         var prefix = workspace?.IssuePrefix ?? GenerateIssuePrefix(workspace?.Name ?? "");
 
-        var response = issues.Select(i => IssueToResponse(i, prefix)).ToList();
+        // Bulk load labels for all issues
+        var issueIds = issues.Select(i => i.Id).ToList();
+        var labelsMap = await IssueLabelHandler.LoadLabelsForIssues(db, issueIds, workspaceId.Value);
+
+        var response = issues.Select(i =>
+        {
+            var labels = labelsMap.GetValueOrDefault(i.Id.ToString(), new List<LabelResponse>());
+            return IssueToResponse(i, prefix, labels);
+        }).ToList();
 
         return Results.Ok(new { issues = response, total });
     }
@@ -1375,7 +1386,7 @@ public static class IssueHandler
     /// <summary>
     /// Converts an Issue entity to an IssueResponse DTO.
     /// </summary>
-    private static IssueResponse IssueToResponse(Issue issue, string prefix)
+    private static IssueResponse IssueToResponse(Issue issue, string prefix, List<LabelResponse>? labels = null)
     {
         var identifier = $"{prefix}-{issue.Number}";
         return new IssueResponse
@@ -1401,7 +1412,8 @@ public static class IssueHandler
             UpdatedAt = issue.UpdatedAt.ToString("o"),
             Metadata = issue.Metadata != null
                 ? JsonSerializer.Deserialize<Dictionary<string, object>>(issue.Metadata.RootElement.GetRawText()) ?? new Dictionary<string, object>()
-                : new Dictionary<string, object>()
+                : new Dictionary<string, object>(),
+            Labels = labels
         };
     }
 
@@ -1500,6 +1512,9 @@ public static class IssueHandler
 
         [System.Text.Json.Serialization.JsonPropertyName("metadata")]
         public Dictionary<string, object> Metadata { get; init; } = new();
+
+        [System.Text.Json.Serialization.JsonPropertyName("labels")]
+        public List<LabelResponse>? Labels { get; init; }
     }
 
     public record SearchIssueResponse
