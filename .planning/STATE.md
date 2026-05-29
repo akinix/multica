@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-05-29T12:00:00.000Z"
+status: executing
+last_updated: "2026-05-29T10:15:00.000Z"
 progress:
   total_phases: 11
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 9
+  total_plans: 14
+  completed_plans: 5
+  percent: 10
 ---
 
 # Project State
@@ -17,7 +17,7 @@ progress:
 ## Current Phase
 
 **Phase:** Phase 3: Issues & Comments
-**Status:** Ready to execute
+**Status:** Executing Phase 03
 **Next action:** `/gsd:execute-phase 3`
 
 ## Project Reference
@@ -25,7 +25,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** 100% API-compatible C# backend that drops in as a replacement for the Go server
-**Current focus:** Planning — all documents created, awaiting execution
+**Current focus:** Phase 03 — Issues & Comments
 
 ## Progress
 
@@ -45,6 +45,7 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 
 ## Recent Activity
 
+- 2026-05-29: Plan 03-08 completed — Attachment listing and PR tracking endpoints (2 tasks, 9 files)
 - 2026-05-28: Phase 2 completed — Auth & Middleware (4 plans, 24 tasks, full auth pipeline)
 - 2026-05-28: Phase 2 context gathered — Auth & Middleware decisions captured in CONTEXT.md
 - 2026-05-28: Phase 1 completed — Foundation & Data Layer (49 entities, DbContext, infrastructure, tests)
@@ -64,7 +65,9 @@ None — ready to begin execution.
 | 2026-05-28 | EF Core | Mature ORM, PostgreSQL support, migration tooling |
 | 2026-05-28 | Full migration (server + CLI + daemon) | Complete replacement, no Go code retained |
 | 2026-05-28 | Full replacement strategy | Open source, no production users to protect |
+| 2026-05-29 | Join query for PR listing | Return full PR details alongside link metadata |
+| 2026-05-29 | Bulk-load attachments for comments | Avoid N+1 queries in ListComments |
 
 ---
 *Created: 2026-05-28*
-*Last updated: 2026-05-28 after Phase 2 completion*
+*Last updated: 2026-05-29 after Plan 03-08 completion*
