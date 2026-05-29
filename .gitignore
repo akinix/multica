@@ -66,5 +66,7 @@ _features/
 *.app
 server/server
 data/
+!server/src/Multica.Infrastructure/Data/
+!server/src/Multica.Infrastructure/Data/**
 .kilo
 .idea

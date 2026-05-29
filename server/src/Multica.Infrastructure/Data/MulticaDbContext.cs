@@ -1,0 +1,32 @@
+using Microsoft.EntityFrameworkCore;
+using Multica.Core.Entities;
+
+namespace Multica.Infrastructure.Data;
+
+/// <summary>
+/// Application DbContext for Multica.
+/// Compatible with Go's sqlc-generated queries.
+/// </summary>
+public class MulticaDbContext : DbContext
+{
+    public MulticaDbContext(DbContextOptions<MulticaDbContext> options) : base(options)
+    {
+    }
+
+    // Entity sets
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Workspace> Workspaces => Set<Workspace>();
+    public DbSet<Member> Members => Set<Member>();
+    public DbSet<Issue> Issues => Set<Issue>();
+    public DbSet<TaskToken> TaskTokens => Set<TaskToken>();
+    public DbSet<DaemonToken> DaemonTokens => Set<DaemonToken>();
+    public DbSet<PersonalAccessToken> PersonalAccessTokens => Set<PersonalAccessToken>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Apply all configurations from the current assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MulticaDbContext).Assembly);
+    }
+}
